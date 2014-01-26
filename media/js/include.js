@@ -4,24 +4,24 @@
  * @about: Match and download any track from your favorite streaming music service, without limit or ads
  */
 
- var vkParams = {
- 	'app': {
- 		'token': 'aafe2494f3e87bb95a03c75ccbcb2bebeb6e5178d09dae8b7d4fca92cf3441bcec7d6789fef63b1cdc90d'
- 	},
- 	'api': {
- 		'url': 'https://api.vk.com',
- 		'method': 'getTrack',
- 		'version': '5.7'
- 	}
- };
+var vkParams = {
+	'app': {
+		'token': 'aafe2494f3e87bb95a03c75ccbcb2bebeb6e5178d09dae8b7d4fca92cf3441bcec7d6789fef63b1cdc90d'
+	},
+	'api': {
+		'url': 'https://api.vk.com',
+		'method': 'getTrack',
+		'version': '5.7'
+	}
+};
 
- var hostsList = {
- 	'rdio': 'www.rdio.com',
- 	'deezer': 'www.deezer.com',
- 	'spotify': 'play.spotify.com',
- 	'xboxmusic': 'music.xbox.com',
- 	'beatsmusic': 'listen.beatsmusic.com'
- };
+var hostsList = {
+	'rdio': 'www.rdio.com',
+	'deezer': 'www.deezer.com',
+	'spotify': 'play.spotify.com',
+	'xboxmusic': 'music.xbox.com',
+	'beatsmusic': 'listen.beatsmusic.com'
+};
 
 var hostPlayer = null,
 	hostPlayerTrackInfoContainer = null,
@@ -41,35 +41,35 @@ var hostPlayer = null,
 		'track_version': null
 	};
 
- var currentHost = window.location.host;
- var localStorageKey = 'deezify_';
- var downloadEnabled = true,
- 	captchaRequested = false;
+var currentHost = window.location.host;
+var localStorageKey = 'deezify_';
+var downloadEnabled = true,
+	captchaRequested = false;
 
- var deezifyPrimaryContainer = null,
- 	deezifyLinkContainer = null,
- 	deezifyTextContainer = null;
+var deezifyPrimaryContainer = null,
+	deezifyLinkContainer = null,
+	deezifyTextContainer = null;
 
- var hostInjectionPlayerContainer = null;
+var hostInjectionPlayerContainer = null;
 
- var captchaBackground = document.createElement('div');
- captchaBackground.className = 'deezify-captcha-background';
- document.body.appendChild(captchaBackground);
+var captchaBackground = document.createElement('div');
+captchaBackground.className = 'deezify-captcha-background';
+document.body.appendChild(captchaBackground);
 
- var captchaContainer = document.createElement('div');
- captchaContainer.className = 'deezify-captcha-container';
- captchaBackground.appendChild(captchaContainer);
+var captchaContainer = document.createElement('div');
+captchaContainer.className = 'deezify-captcha-container';
+captchaBackground.appendChild(captchaContainer);
 
- var captchaTitle = document.createElement('div');
- captchaTitle.className = 'deezify-captcha-title';
- captchaTitle.innerHTML = '<span>' + hostLocales.captchaTitle + '</span>';
- captchaContainer.appendChild(captchaTitle);
+var captchaTitle = document.createElement('div');
+captchaTitle.className = 'deezify-captcha-title';
+captchaTitle.innerHTML = '<span>' + hostLocales.captchaTitle + '</span>';
+captchaContainer.appendChild(captchaTitle);
 
- var captchaAction = document.createElement('div');
- captchaAction.className = 'deezify-captcha-action';
- captchaContainer.appendChild(captchaAction);
+var captchaAction = document.createElement('div');
+captchaAction.className = 'deezify-captcha-action';
+captchaContainer.appendChild(captchaAction);
 
- switch (currentHost)
+switch (currentHost)
 {
 	case hostsList.rdio:
 		break;
@@ -199,7 +199,7 @@ var deezify = {
 				{
 					hostSongData.title_container = hostPlayer.getElementsByClassName('primaryMetadata')[1];
 					hostSongData.performer_container = hostPlayer.getElementsByClassName('secondaryMetadata')[1];
-					
+
 					hostSongData.title = hostSongData.title_container.innerText.trim();
 					hostSongData.performer = hostSongData.performer_container.getElementsByTagName('a')[0].innerText.trim();
 					return deezify.matchData(hostSongData);
