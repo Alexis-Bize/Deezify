@@ -1,0 +1,38 @@
+{
+	"deezifyDescription": {
+		"message": "Recherchez et téléchargez toutes les pistes audio de votre service de streaming musical préféré, sans limite ou publicité !"
+	},
+
+	"deezerDownloadMessage": {
+		"message": "Télécharger cette piste audio"
+	},
+	"deezerDownloadMatching": {
+		"message": "Recherche..."
+	},
+	"deezerDownloadError": {
+		"message": "Cette piste audio est indisponible :("
+	},
+	"deezerCaptchaError": {
+		"message": "Le captcha renvoyé est erroné"
+	},
+	
+	"xboxMusicDownloadMessage": {
+		"message": "Télécharger cette piste audio"
+	},
+	"xboxMusicDownloadMatching": {
+		"message": "Recherche..."
+	},
+	"xboxMusicDownloadError": {
+		"message": "Piste audio indisponible :("
+	},
+	"xboxMusicCaptchaError": {
+		"message": "Le captcha renvoyé est erroné"
+	},
+
+	"globalCaptchaTitle": {
+		"message": "Merci de compléter le captcha ci-dessous"
+	},
+	"globalCaptchaSubmit": {
+		"message": "Envoyer"
+	}
+}

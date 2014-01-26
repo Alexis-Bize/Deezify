@@ -1,0 +1,38 @@
+{
+	"deezifyDescription": {
+		"message": "Match and download any track from your favorite streaming music service, without limit or ads!"
+	},
+
+	"deezerDownloadMessage": {
+		"message": "Download the current track"
+	},
+	"deezerDownloadMatching": {
+		"message": "Matching..."
+	},
+	"deezerDownloadError": {
+		"message": "This track is unavailable :("
+	},
+	"deezerCaptchaError": {
+		"message": "The submited captcha was erroned"
+	},
+
+	"xboxMusicDownloadMessage": {
+		"message": "Download the current track"
+	},
+	"xboxMusicDownloadMatching": {
+		"message": "Matching..."
+	},
+	"xboxMusicDownloadError": {
+		"message": "This track is unavailable :("
+	},
+	"xboxMusicCaptchaError": {
+		"message": "The submited captcha was erroned"
+	},
+	
+	"globalCaptchaTitle": {
+		"message": "Please complete the captcha below to continue"
+	},
+	"globalCaptchaSubmit": {
+		"message": "Submit"
+	}
+}

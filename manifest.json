@@ -1,0 +1,35 @@
+{
+    "name": "Deezify",
+    "version": "1.0",
+    "manifest_version": 2,
+    "description": "__MSG_deezifyDescription__",
+    "icons": {
+        "16": "media/images/icon_16.png",
+        "48": "media/images/icon_48.png",
+        "64": "media/images/icon_64.png",
+        "128": "media/images/icon_128.png",
+        "256": "media/images/icon_256.png"
+    },
+    "default_locale": "en",
+    "permissions": [
+        "activeTab",
+        "*://*.vk.com/*"
+    ],
+    "content_scripts": [
+        {
+            "matches": [
+                "*://music.xbox.com/*",
+                "*://www.deezer.com/*",
+                "*://play.spotify.com/*"
+            ],
+            "css": [
+                "media/css/deezify.css"
+            ],
+            "js": [
+                "media/js/include.js"
+            ],
+            "all_frames" : false,
+            "run_at": "document_idle"
+        }
+    ]
+}
