@@ -1,5 +1,5 @@
 /*
- * Deezify - 1.0
+ * Deezify - 1.0.1
  * @author: Alexis (@_SuckMyLuck) Bize <alexis.bize@gmail.com>
  * @about: Match and download any track from your favorite streaming music service, without limit or ads
  */
@@ -50,8 +50,6 @@
  		deezifyLinkContainer = null,
  		deezifyTextContainer = null;
 
- 	var hostInjectionPlayerContainer = null;
-
  	var captchaBackground = document.createElement('div');
  	captchaBackground.className = 'deezify-captcha-background';
  	document.body.appendChild(captchaBackground);
@@ -69,107 +67,15 @@
  	captchaAction.className = 'deezify-captcha-action';
  	captchaContainer.appendChild(captchaAction);
 
- 	switch (currentHost)
-	{
-		case hostsList.rdio:
-			break;
-		case hostsList.deezer:
-
-			hostLocales.downloadMp3 = chrome.i18n.getMessage('deezerDownloadMessage');
-			hostLocales.undefinedMp3 = chrome.i18n.getMessage('deezerDownloadError');
-			hostLocales.matchingMp3 = chrome.i18n.getMessage('deezerDownloadMatching');
-			hostLocales.captchaError = chrome.i18n.getMessage('deezerCaptchaError');
-
-			hostPlayer = document.getElementsByClassName('player')[0];
-			if (typeof hostPlayer === 'undefined')
-				break;
-
-			var hostPlayerTrackInfoContainer = hostPlayer.getElementsByClassName('track-info')[0];
-			hostPlayerTrackInfoContainer.addEventListener('DOMSubtreeModified', dzrPlayerReady);
-			
-			function dzrPlayerReady(e)
-			{
-				if (e.srcElement.id === 'player_track_title')
-				{
-					hostPlayerTrackInfoContainer.removeEventListener('DOMSubtreeModified', dzrPlayerReady);
-					hostSongData.title_container = document.getElementById('player_track_title');
-					hostSongData.performer_container = document.getElementById('player_track_artist_container');
-
-					hostInjectionPlayerContainer = document.getElementsByClassName('topbar')[0].getElementsByClassName('nav')[0];
-					deezifyPrimaryContainer = document.createElement('li');
-					deezifyPrimaryContainer.className = 'deezify-container';
-					hostInjectionPlayerContainer.appendChild(deezifyPrimaryContainer);
-
-					deezifyLinkContainer = document.createElement('a');
-					deezifyLinkContainer.className = 'deezify-link';
-					deezifyLinkContainer.setAttribute('data-deezify-ref', 'player');
-					deezifyPrimaryContainer.appendChild(deezifyLinkContainer);
-
-					deezifyTextContainer = document.createElement('span');
-					deezifyTextContainer.className = 'deezify-text';
-					deezifyTextContainer.innerText = hostLocales.downloadMp3;
-					deezifyLinkContainer.appendChild(deezifyTextContainer);
-
-					deezify.fade('in', deezifyPrimaryContainer, function() {
-						deezifyLinkContainer.onclick = deezify.initDownload;
-						deezifyTextContainer.onclick = deezifyLinkContainer.click;
-					});
-				}
-			}
-			break;
-		case hostsList.spotify:
-			break;
-		case hostsList.xboxmusic:
-
-			hostLocales.downloadMp3 = chrome.i18n.getMessage('xboxMusicDownloadMessage');
-			hostLocales.undefinedMp3 = chrome.i18n.getMessage('xboxMusicDownloadError');
-			hostLocales.matchingMp3 = chrome.i18n.getMessage('xboxMusicDownloadMatching');
-			hostLocales.captchaError = chrome.i18n.getMessage('xboxMusicCaptchaError');
-
-			hostPlayer = document.getElementById('player');
-			if (typeof hostPlayer === 'undefined')
-				break;
-
-			hostPlayer.addEventListener('DOMSubtreeModified', xboxMusicPlayerReady);
-
-			function xboxMusicPlayerReady(e)
-			{
-				if (e.srcElement.className === 'playerNowPlaying'
-				&& typeof hostPlayer.getElementsByClassName('primaryMetadata')[1] !== 'undefined')
-				{
-					hostPlayer.removeEventListener('DOMSubtreeModified', xboxMusicPlayerReady);
-
-					hostInjectionPlayerContainer = document.getElementById('navigation').getElementsByTagName('ul')[0];
-					deezifyPrimaryContainer = document.createElement('li');
-					deezifyPrimaryContainer.className = 'deezify-container';
-					hostInjectionPlayerContainer.appendChild(deezifyPrimaryContainer);
-
-					deezifyLinkContainer = document.createElement('a');
-					deezifyLinkContainer.className = 'deezify-link';
-					deezifyLinkContainer.setAttribute('data-deezify-ref', 'player');
-					deezifyPrimaryContainer.appendChild(deezifyLinkContainer);
-
-					deezifyIconContainer = document.createElement('span');
-					deezifyIconContainer.className = 'iconRowSecondaryAdd';
-					deezifyLinkContainer.appendChild(deezifyIconContainer);
-
-					deezifyTextContainer = document.createElement('span');
-					deezifyTextContainer.className = 'deezify-text';
-					deezifyTextContainer.innerText = hostLocales.downloadMp3;
-					deezifyLinkContainer.appendChild(deezifyTextContainer);
-
-					deezify.fade('in', deezifyPrimaryContainer, function() {
-						deezifyLinkContainer.onclick = deezify.initDownload;
-						deezifyTextContainer.onclick = deezifyLinkContainer.click;
-					});
-				}
-			}
-			break;
-		case hostsList.beatsmusic:
-			break;
-	}
-
 	var deezify = {
+
+		setLocales: function(host)
+		{
+			hostLocales.downloadMp3		= chrome.i18n.getMessage(host + 'DownloadMessage');
+			hostLocales.undefinedMp3	= chrome.i18n.getMessage(host + 'DownloadError');
+			hostLocales.matchingMp3		= chrome.i18n.getMessage(host + 'DownloadMatching');
+			hostLocales.captchaError	= chrome.i18n.getMessage(host + 'CaptchaError');
+		},
 
 		initDownload: function(e)
 		{
@@ -183,38 +89,33 @@
 		
 			deezifyTextContainer.innerText = hostLocales.matchingMp3;
 
-			switch(currentHost)
+			if (downloadRef === 'player')
 			{
-				case hostsList.deezer:
-					if (downloadRef === 'player')
-					{
-						hostSongData.title = hostSongData.title_container.innerText;
-						hostSongData.performer = hostSongData.performer_container.innerText;
-						hostSongData.track_version = deezify.getDzrTrackVersion();
-						return deezify.matchData(hostSongData);
-					}
-					break;
-				case hostsList.xboxmusic:
-					if (downloadRef === 'player')
-					{
-						hostSongData.title_container = hostPlayer.getElementsByClassName('primaryMetadata')[1];
-						hostSongData.performer_container = hostPlayer.getElementsByClassName('secondaryMetadata')[1];
+				if (currentHost === hostsList.deezer)
+				{
+					hostSongData.title_container = document.getElementById('player_track_title');
+					hostSongData.performer_container = document.getElementById('player_track_artist_container');
+					hostSongData.title = hostSongData.title_container.innerText;
+					hostSongData.performer = hostSongData.performer_container.innerText;
+					hostSongData.track_version = deezify.getDzrTrackVersion();
+				}
 
-						hostSongData.title = hostSongData.title_container.innerText.trim();
-						hostSongData.performer = hostSongData.performer_container.getElementsByTagName('a')[0].innerText.trim();
-						return deezify.matchData(hostSongData);
-					}
-					break;
-				default:
-					downloadEnabled = true;
-					return false;
-			}	
+				else if (currentHost === hostsList.xboxmusic)
+				{
+					hostSongData.title_container = hostPlayer.getElementsByClassName('primaryMetadata')[1];
+					hostSongData.performer_container = hostPlayer.getElementsByClassName('secondaryMetadata')[1];
+					hostSongData.title = hostSongData.title_container.innerText.trim();
+					hostSongData.performer = hostSongData.performer_container.getElementsByTagName('a')[0].innerText.trim();
+				}
+
+				return deezify.matchData(hostSongData);
+			}
 		},
 
 		matchData: function(songData, captchaData)
 		{
 			captchaData = captchaData || null;
-			var vkQueryData = {
+			var apiQueryData = {
 				'title': songData.performer + ' - ' + songData.title,
 				'auto_complete': 1,
 				'access_token': vkParams.app.token,
@@ -222,16 +123,28 @@
 			};
 
 			if (songData.track_version)
-				vkQueryData.track = vkQueryData.track + ' ' + songData.track_version;
+				apiQueryData.title = apiQueryData.title + ' ' + songData.track_version;
 
 			if (captchaData !== null)
 			{
-				vkQueryData.captcha_sid = captchaData.sid;
-				vkQueryData.captcha_key = captchaData.key;
+				apiQueryData.captcha_sid = captchaData.sid;
+				apiQueryData.captcha_key = captchaData.key;
 			}
 
+			var trackTitlePatch = {
+				' (Album Version Explicit)': '',
+				' (Explicit Version)': '',
+				' (Skit Explicit)': '',
+				' (Album Version Edited)': '',
+				' (Motion Picture Soundtrack)': '',
+				' (From The Nissan Qashqai Movie)': ''
+			};
+
+			for (var patch in trackTitlePatch)
+				apiQueryData.title = apiQueryData.title.replace(patch, trackTitlePatch[patch]);
+
 			xmlhttp = new XMLHttpRequest();
-			xmlhttp.open('GET', vkParams.api.url + '/method/execute.' + vkParams.api.method + deezify.encodeQueryData(vkQueryData), true);
+			xmlhttp.open('GET', vkParams.api.url + '/method/execute.' + vkParams.api.method + deezify.encodeQueryData(apiQueryData), true);
 			xmlhttp.send();
 			xmlhttp.onreadystatechange = function()
 			{
@@ -241,7 +154,7 @@
 					if (typeof apiResponse.error === 'undefined' && apiResponse.response.count)
 					{
 						var url = document.createElement('a');
-					 	url.download = vkQueryData.title + ' - Deezify.mp3';
+					 	url.download = apiQueryData.title + ' - Deezify.mp3';
 						url.href = apiResponse.response.items[0].url;
 						url.dataset.downloadurl = ['audio/mpeg', url.download, url.href].join(':');
 						url.click();
@@ -249,28 +162,25 @@
 						deezifyTextContainer.innerText = hostLocales.downloadMp3;
 						downloadEnabled = true;
 					}
+
 					else if (typeof apiResponse.error === 'undefined' && !apiResponse.response.count)
 						return deezify.setApiError(1);
+
 					else if (typeof apiResponse.error !== 'undefined' && captchaRequested)
 						return deezify.setApiError(2);
-					else
+
+					else if (apiResponse.error.error_code === 14)
 					{
-						var apiError = apiResponse.error.error_code;
-						switch (apiError)
-						{
-							case 14:
-								return deezify.setCaptcha({
-									'songData': songData,
-									'captchaData': {
-										'sid': apiResponse.error.captcha_sid,
-										'img': apiResponse.error.captcha_img
-									}
-								});
-								break;
-							default:
-								return deezify.setApiError(1);
-						}
+						return deezify.setCaptcha({
+							'songData': songData,
+							'captchaData': {
+								'sid': apiResponse.error.captcha_sid,
+								'img': apiResponse.error.captcha_img
+							}
+						});
 					}
+
+					else return deezify.setApiError(1);
 				}
 			};
 			return false;
@@ -319,9 +229,11 @@
 				{
 					setTimeout(function()
 					{
-						deezify.fade('out', deezifyTextContainer, 100, function() {
+						deezify.fade('out', deezifyTextContainer, 100, function()
+						{
 							deezifyTextContainer.innerText = hostLocales.downloadMp3;
-							deezify.fade('in', deezifyTextContainer, 100, function() {
+							deezify.fade('in', deezifyTextContainer, 100, function()
+							{
 								downloadEnabled = true;
 								captchaRequested = false;
 							});
@@ -343,11 +255,10 @@
 		{
 			var xPlayerData = document.createElement('script');
 			xPlayerData.type = 'text/javascript';
-			xPlayerData.text = 'localStorage.setItem("' + localStorageKey + 'trackVersion", (dzPlayer.getCurrentSongInfo().VERSION || ""));';
+			xPlayerData.text = 'localStorage.setItem("' + localStorageKey + 'trackVersion", dzPlayer.getCurrentSongInfo().VERSION || "");';
 			document.body.appendChild(xPlayerData);
-			var trackVersion = localStorage.getItem(localStorageKey + 'trackVersion');
 			document.body.removeChild(xPlayerData);
-			return trackVersion;
+			return localStorage.getItem(localStorageKey + 'trackVersion');;
 		},
 
 		fade: function(type, element, speed, callback)
@@ -358,41 +269,142 @@
 			else speed = parseInt(speed);
 			speed = speed / 10;
 
-			switch (type)
+			if (type === 'in')
 			{
-				case 'in':
-					element.style.display = 'block';
-					element.style.opacity = 0;
-					var interval = setInterval(function()
+				element.style.display = 'block';
+				element.style.opacity = 0;
+				var interval = setInterval(function()
+				{
+					var elementOpacity = element.style.opacity;
+					if (elementOpacity >= 1)
 					{
-						var elementOpacity = element.style.opacity;
-						if (elementOpacity >= 1)
-						{
-							clearInterval(interval);
-							element.style.opacity = 1;
-							if (callback !== null)
-								return callback();
-						}
-						element.style.opacity = parseFloat(elementOpacity) + 0.05;
-					}, speed);
-					break;
-				case 'out':
-					element.style.opacity = 1;
-					var interval = setInterval(function()
-					{
-						var elementOpacity = element.style.opacity;
-						if (elementOpacity <= 0.1)
-						{
-							element.style.display = 'none';
-							clearInterval(interval);
-							element.style.opacity = 0;
-							if (callback !== null)
-								return callback();
-						}
-						element.style.opacity = parseFloat(elementOpacity) - 0.05;
-					}, speed);
-					break;
+						clearInterval(interval);
+						element.style.opacity = 1;
+						if (callback !== null)
+							return callback();
+					}
+					element.style.opacity = parseFloat(elementOpacity) + 0.05;
+				}, speed);
 			}
+
+			else if (type === 'out')
+			{
+				element.style.opacity = 1;
+				var interval = setInterval(function()
+				{
+					var elementOpacity = element.style.opacity;
+					if (elementOpacity <= 0.1)
+					{
+						element.style.display = 'none';
+						clearInterval(interval);
+						element.style.opacity = 0;
+						if (callback !== null)
+							return callback();
+					}
+					element.style.opacity = parseFloat(elementOpacity) - 0.05;
+				}, speed);
+			}
+
 		}
 
 	};
+
+	if (currentHost === hostsList.rdio)
+	{
+		// TODO, maybe
+	}
+
+	else if (currentHost === hostsList.deezer)
+	{
+		deezify.setLocales('deezer');
+		hostPlayer = document.getElementsByClassName('player')[0];
+		if (typeof hostPlayer === 'undefined')
+			return;
+
+		var deezerTrackInfoContainer = hostPlayer.getElementsByClassName('track-info')[0];
+		deezerTrackInfoContainer.addEventListener('DOMSubtreeModified', deezerPlayerReady);
+
+		function deezerPlayerReady(e)
+		{
+			if (e.srcElement.id === 'player_track_title')
+			{
+				deezerTrackInfoContainer.removeEventListener('DOMSubtreeModified', deezerPlayerReady);
+
+				hostInjectionPlayerContainer = document.getElementsByClassName('topbar')[0].getElementsByClassName('nav')[0];
+				deezifyPrimaryContainer = document.createElement('li');
+				deezifyPrimaryContainer.className = 'deezify-container';
+				hostInjectionPlayerContainer.appendChild(deezifyPrimaryContainer);
+
+				deezifyLinkContainer = document.createElement('a');
+				deezifyLinkContainer.className = 'deezify-link';
+				deezifyLinkContainer.setAttribute('data-deezify-ref', 'player');
+				deezifyPrimaryContainer.appendChild(deezifyLinkContainer);
+
+				deezifyTextContainer = document.createElement('span');
+				deezifyTextContainer.className = 'deezify-text';
+				deezifyTextContainer.innerText = hostLocales.downloadMp3;
+				deezifyLinkContainer.appendChild(deezifyTextContainer);
+
+				deezify.fade('in', deezifyPrimaryContainer, function() {
+					deezifyLinkContainer.onclick = deezify.initDownload;
+					deezifyTextContainer.onclick = deezifyLinkContainer.click;
+				});
+			}
+		}
+
+
+	}
+
+	else if (currentHost === hostsList.spotify)
+	{
+		// TODO, once again
+	}
+
+	else if (currentHost === hostsList.xboxmusic)
+	{
+		deezify.setLocales('xboxMusic');
+		hostPlayer = document.getElementsByClassName('player')[0];
+		if (typeof hostPlayer === 'undefined')
+			return;
+
+		hostPlayer.addEventListener('DOMSubtreeModified', xboxMusicPlayerReady);
+
+		function xboxMusicPlayerReady(e)
+		{
+			if (e.srcElement.className === 'playerNowPlaying'
+			&& typeof hostPlayer.getElementsByClassName('primaryMetadata')[1] !== 'undefined')
+			{
+				hostPlayer.removeEventListener('DOMSubtreeModified', xboxMusicPlayerReady);
+
+				hostInjectionPlayerContainer = document.getElementById('navigation').getElementsByTagName('ul')[0];
+				deezifyPrimaryContainer = document.createElement('li');
+				deezifyPrimaryContainer.className = 'deezify-container';
+				hostInjectionPlayerContainer.appendChild(deezifyPrimaryContainer);
+
+				deezifyLinkContainer = document.createElement('a');
+				deezifyLinkContainer.className = 'deezify-link';
+				deezifyLinkContainer.setAttribute('data-deezify-ref', 'player');
+				deezifyPrimaryContainer.appendChild(deezifyLinkContainer);
+
+				deezifyIconContainer = document.createElement('span');
+				deezifyIconContainer.className = 'iconRowSecondaryAdd';
+				deezifyLinkContainer.appendChild(deezifyIconContainer);
+
+				deezifyTextContainer = document.createElement('span');
+				deezifyTextContainer.className = 'deezify-text';
+				deezifyTextContainer.innerText = hostLocales.downloadMp3;
+				deezifyLinkContainer.appendChild(deezifyTextContainer);
+
+				deezify.fade('in', deezifyPrimaryContainer, function() {
+					deezifyLinkContainer.onclick = deezify.initDownload;
+					deezifyTextContainer.onclick = deezifyLinkContainer.click;
+				});
+			}
+		}
+
+	}
+
+	else if (currentHost === hostsList.beatsmusic)
+	{
+		// TODO, or release BeatsMe (rtmp parser)
+	}
