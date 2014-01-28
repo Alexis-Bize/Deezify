@@ -26,7 +26,7 @@
                 "media/css/deezify.css"
             ],
             "js": [
-                "media/js/include.js"
+                "src/include.js"
             ],
             "all_frames" : false,
             "run_at": "document_idle"
