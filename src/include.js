@@ -4,6 +4,8 @@
  * @about: Match and download any track from your favorite streaming music service, without limit or ads
  */
 
+ 	'use strict';
+
  	var vkParams = {
  		'app': {
  			'token': 'aafe2494f3e87bb95a03c75ccbcb2bebeb6e5178d09dae8b7d4fca92cf3441bcec7d6789fef63b1cdc90d'
@@ -24,6 +26,7 @@
  	};
 
 	var hostPlayer = null,
+		hostInjectionPlayerContainer = null,
 		hostPlayerTrackInfoContainer = null,
 		hostLocales = {
 			'downloadMp3': null,
@@ -48,7 +51,8 @@
 
  	var deezifyPrimaryContainer = null,
  		deezifyLinkContainer = null,
- 		deezifyTextContainer = null;
+ 		deezifyTextContainer = null,
+ 		deezifyIconContainer = null;
 
  	var captchaBackground = document.createElement('div');
  	captchaBackground.className = 'deezify-captcha-background';
@@ -108,6 +112,14 @@
 					hostSongData.performer = hostSongData.performer_container.getElementsByTagName('a')[0].innerText.trim();
 				}
 
+				else if (currentHost === hostsList.spotify)
+				{
+					hostSongData.title_container = hostPlayer.getElementsByTagName('h3')[0];
+					hostSongData.performer_container = hostPlayer.getElementsByTagName('h4')[0];
+					hostSongData.title = hostSongData.title_container.innerText.trim();
+					hostSongData.performer = hostSongData.performer_container.getElementsByTagName('a')[0].innerText.trim();
+				}
+
 				return deezify.matchData(hostSongData);
 			}
 		},
@@ -143,7 +155,7 @@
 			for (var patch in trackTitlePatch)
 				apiQueryData.title = apiQueryData.title.replace(patch, trackTitlePatch[patch]);
 
-			xmlhttp = new XMLHttpRequest();
+			var xmlhttp = new XMLHttpRequest();
 			xmlhttp.open('GET', vkParams.api.url + '/method/execute.' + vkParams.api.method + deezify.encodeQueryData(apiQueryData), true);
 			xmlhttp.send();
 			xmlhttp.onreadystatechange = function()
@@ -317,18 +329,11 @@
 	else if (currentHost === hostsList.deezer)
 	{
 		deezify.setLocales('deezer');
-		hostPlayer = document.getElementsByClassName('player')[0];
-		if (typeof hostPlayer === 'undefined')
-			return;
-
-		var deezerTrackInfoContainer = hostPlayer.getElementsByClassName('track-info')[0];
-		deezerTrackInfoContainer.addEventListener('DOMSubtreeModified', deezerPlayerReady);
-
-		function deezerPlayerReady(e)
-		{
-			if (e.srcElement.id === 'player_track_title')
+		var getPlayer = setInterval(function() {
+			if (document.getElementById('player_track_title'))
 			{
-				deezerTrackInfoContainer.removeEventListener('DOMSubtreeModified', deezerPlayerReady);
+				clearInterval(getPlayer);
+				hostPlayer = document.getElementsByClassName('player')[0];
 
 				hostInjectionPlayerContainer = document.getElementsByClassName('topbar')[0].getElementsByClassName('nav')[0];
 				deezifyPrimaryContainer = document.createElement('li');
@@ -350,31 +355,49 @@
 					deezifyTextContainer.onclick = deezifyLinkContainer.click;
 				});
 			}
-		}
-
-
+		}, 200);
 	}
 
 	else if (currentHost === hostsList.spotify)
 	{
-		// TODO, once again
+		deezify.setLocales('spotify');
+		var getPlayer = setInterval(function() {
+			if (!!~document.body.className.indexOf('started'))
+			{
+				clearInterval(getPlayer);
+				hostPlayer = document.getElementById('app-player').contentDocument.getElementById('player');
+
+				hostInjectionPlayerContainer = document.getElementById('main-nav').getElementsByTagName('ul')[0];
+				deezifyPrimaryContainer = document.createElement('li');
+				deezifyPrimaryContainer.className = 'deezify-container';
+				hostInjectionPlayerContainer.appendChild(deezifyPrimaryContainer);
+
+				deezifyLinkContainer = document.createElement('a');
+				deezifyLinkContainer.className = 'deezify-link spoticon-download-32 standard-menu-item';
+				deezifyLinkContainer.setAttribute('data-deezify-ref', 'player');
+				deezifyPrimaryContainer.appendChild(deezifyLinkContainer);
+
+				deezifyTextContainer = document.createElement('span');
+				deezifyTextContainer.className = 'deezify-text nav-text';
+				deezifyTextContainer.innerText = hostLocales.downloadMp3;
+				deezifyLinkContainer.appendChild(deezifyTextContainer);
+
+				deezify.fade('in', deezifyPrimaryContainer, function() {
+					deezifyLinkContainer.onclick = deezify.initDownload;
+					deezifyTextContainer.onclick = deezifyLinkContainer.click;
+				});
+			}
+		}, 200);
 	}
 
 	else if (currentHost === hostsList.xboxmusic)
 	{
 		deezify.setLocales('xboxMusic');
-		hostPlayer = document.getElementsByClassName('player')[0];
-		if (typeof hostPlayer === 'undefined')
-			return;
-
-		hostPlayer.addEventListener('DOMSubtreeModified', xboxMusicPlayerReady);
-
-		function xboxMusicPlayerReady(e)
-		{
-			if (e.srcElement.className === 'playerNowPlaying'
-			&& typeof hostPlayer.getElementsByClassName('primaryMetadata')[1] !== 'undefined')
+		var getPlayer = setInterval(function() {
+			if (document.getElementsByClassName('playerNowPlayingMetadata').length)
 			{
-				hostPlayer.removeEventListener('DOMSubtreeModified', xboxMusicPlayerReady);
+				clearInterval(getPlayer);
+				hostPlayer = document.getElementsByClassName('player')[0];
 
 				hostInjectionPlayerContainer = document.getElementById('navigation').getElementsByTagName('ul')[0];
 				deezifyPrimaryContainer = document.createElement('li');
@@ -400,11 +423,10 @@
 					deezifyTextContainer.onclick = deezifyLinkContainer.click;
 				});
 			}
-		}
-
+		}, 200);
 	}
 
 	else if (currentHost === hostsList.beatsmusic)
 	{
-		// TODO, or release BeatsMe (rtmp parser)
+		// Meh
 	}
