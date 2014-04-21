@@ -1,6 +1,6 @@
 {
     "name": "Deezify",
-    "version": "1.0.1",
+    "version": "1.0",
     "manifest_version": 2,
     "description": "__MSG_deezifyDescription__",
     "icons": {
@@ -28,8 +28,7 @@
             "js": [
                 "src/include.js"
             ],
-            "all_frames" : false,
-            "run_at": "document_idle"
+            "all_frames" : false
         }
     ]
 }
