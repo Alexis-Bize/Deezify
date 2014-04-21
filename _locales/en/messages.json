@@ -16,6 +16,19 @@
 		"message": "The submited captcha was erroned"
 	},
 
+	"spotifyDownloadMessage": {
+		"message": "Download"
+	},
+	"spotifyDownloadMatching": {
+		"message": "Matching..."
+	},
+	"spotifyDownloadError": {
+		"message": "Unavailable"
+	},
+	"spotifyCaptchaError": {
+		"message": "Error"
+	},
+
 	"xboxMusicDownloadMessage": {
 		"message": "Download the current track"
 	},
