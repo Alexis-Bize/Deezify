@@ -97,11 +97,9 @@
 			{
 				if (currentHost === hostsList.deezer)
 				{
-					hostSongData.title_container = document.getElementById('player_track_title');
-					hostSongData.performer_container = document.getElementById('player_track_artist_container');
-					hostSongData.title = hostSongData.title_container.innerText;
-					hostSongData.performer = hostSongData.performer_container.innerText;
-					hostSongData.track_version = deezify.getDzrTrackVersion();
+                                        hostSongData.title = deezify.getDzrInfo('getSongTitle()');
+					hostSongData.performer = deezify.getDzrInfo('getArtistName()');
+					hostSongData.track_version = '';
 				}
 
 				else if (currentHost === hostsList.xboxmusic)
@@ -169,7 +167,7 @@
 					 	url.download = apiQueryData.title + ' - Deezify.mp3';
 						url.href = apiResponse.response.items[0].url;
 						url.dataset.downloadurl = ['audio/mpeg', url.download, url.href].join(':');
-						url.click();
+                                                url.click();
 
 						deezifyTextContainer.innerText = hostLocales.downloadMp3;
 						downloadEnabled = true;
@@ -263,14 +261,14 @@
 			return '?' + query.join('&');
 		},
 
-		getDzrTrackVersion: function()
+		getDzrInfo: function(prop)
 		{
 			var xPlayerData = document.createElement('script');
 			xPlayerData.type = 'text/javascript';
-			xPlayerData.text = 'localStorage.setItem("' + localStorageKey + 'trackVersion", dzPlayer.getCurrentSongInfo().VERSION || "");';
+			xPlayerData.text = 'localStorage.setItem("' + localStorageKey + 'dzPlayer", dzPlayer.'+prop+' || "");';
 			document.body.appendChild(xPlayerData);
 			document.body.removeChild(xPlayerData);
-			return localStorage.getItem(localStorageKey + 'trackVersion');;
+			return localStorage.getItem(localStorageKey + 'dzPlayer');
 		},
 
 		fade: function(type, element, speed, callback)
@@ -328,32 +326,30 @@
 
 	else if (currentHost === hostsList.deezer)
 	{
-		deezify.setLocales('deezer');
+                deezify.setLocales('deezer');
 		var getPlayer = setInterval(function() {
-			if (document.getElementById('player_track_title'))
+			if (document.getElementsByClassName('brand').length > 0)
 			{
-				clearInterval(getPlayer);
-				hostPlayer = document.getElementsByClassName('player')[0];
+                            clearInterval(getPlayer);
+                            hostInjectionPlayerContainer = document.getElementsByClassName('brand')[0];
+                            deezifyPrimaryContainer = document.createElement('div');
+                            deezifyPrimaryContainer.className = 'deezify-container';
+                            hostInjectionPlayerContainer.appendChild(deezifyPrimaryContainer);
 
-				hostInjectionPlayerContainer = document.getElementsByClassName('topbar')[0].getElementsByClassName('nav')[0];
-				deezifyPrimaryContainer = document.createElement('li');
-				deezifyPrimaryContainer.className = 'deezify-container';
-				hostInjectionPlayerContainer.appendChild(deezifyPrimaryContainer);
+                            deezifyLinkContainer = document.createElement('a');
+                            deezifyLinkContainer.className = 'deezify-link';
+                            deezifyLinkContainer.setAttribute('data-deezify-ref', 'player');
+                            deezifyPrimaryContainer.appendChild(deezifyLinkContainer);
 
-				deezifyLinkContainer = document.createElement('a');
-				deezifyLinkContainer.className = 'deezify-link';
-				deezifyLinkContainer.setAttribute('data-deezify-ref', 'player');
-				deezifyPrimaryContainer.appendChild(deezifyLinkContainer);
+                            deezifyTextContainer = document.createElement('span');
+                            deezifyTextContainer.className = 'deezify-text';
+                            deezifyTextContainer.innerText = hostLocales.downloadMp3;
+                            deezifyLinkContainer.appendChild(deezifyTextContainer);
 
-				deezifyTextContainer = document.createElement('span');
-				deezifyTextContainer.className = 'deezify-text';
-				deezifyTextContainer.innerText = hostLocales.downloadMp3;
-				deezifyLinkContainer.appendChild(deezifyTextContainer);
-
-				deezify.fade('in', deezifyPrimaryContainer, function() {
-					deezifyLinkContainer.onclick = deezify.initDownload;
-					deezifyTextContainer.onclick = deezifyLinkContainer.click;
-				});
+                            deezify.fade('in', deezifyPrimaryContainer, function() {
+                                    deezifyLinkContainer.onclick = deezify.initDownload;
+                                    deezifyTextContainer.onclick = deezifyLinkContainer.click;
+                            });
 			}
 		}, 200);
 	}

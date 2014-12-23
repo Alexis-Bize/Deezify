@@ -69,3 +69,7 @@
 		display: none;
 		opacity: 0;
 	}
+        
+        a.deezify-link {
+                color: #fff;
+        }
