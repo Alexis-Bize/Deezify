@@ -160,19 +160,31 @@
 			{
 				if (xmlhttp.readyState === 4)
 				{
-					var apiResponse = JSON.parse(xmlhttp.response);
-					if (typeof apiResponse.error === 'undefined' && apiResponse.response.count)
-					{
-						var url = document.createElement('a');
-					 	url.download = apiQueryData.title + ' - Deezify.mp3';
-						url.href = apiResponse.response.items[0].url;
-						url.dataset.downloadurl = ['audio/mpeg', url.download, url.href].join(':');
-                                                url.click();
+                                        var apiResponse = JSON.parse(xmlhttp.response);	
+                                        if (typeof apiResponse.error === 'undefined' && apiResponse.response.count)
+					{                                        
+                                            deezifyTextContainer.innerText = hostLocales.downloadMp3;        
+                                            
+                                            var xhr = new XMLHttpRequest();
+                                            xhr.open('GET', apiResponse.response.items[0].url, true);
+                                            xhr.responseType = 'blob';
+                                            xhr.onload = function(e) {
+                                                    if (this.status == 200) 
+                                                    {
+                                                        var blob = new Blob([this.response], {type: 'audio/mpeg'});
+                                                        var url = window.URL.createObjectURL(blob);
+                                                        var a = document.createElement('a');
+                                                        a.download = apiQueryData.title + ' - Deezify.mp3';
+                                                        a.href = url;
+                                                        //a.dataset.downloadurl = ['audio/mpeg', url.download, url.href].join(':');
+                                                        a.click();
+                                                        window.URL.revokeObjectURL(url);
 
-						deezifyTextContainer.innerText = hostLocales.downloadMp3;
-						downloadEnabled = true;
-					}
-
+                                                        downloadEnabled = true;
+                                                    }
+                                            };
+                                            xhr.send();
+                                        }   
 					else if (typeof apiResponse.error === 'undefined' && !apiResponse.response.count)
 						return deezify.setApiError(1);
 
