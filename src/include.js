@@ -4,6 +4,8 @@
  * @about: Match and download any track from your favorite streaming music service, without limit or ads
  */
 
+ 	'use strict';
+
  	var vkParams = {
  		'app': {
  			'token': 'aafe2494f3e87bb95a03c75ccbcb2bebeb6e5178d09dae8b7d4fca92cf3441bcec7d6789fef63b1cdc90d'
@@ -24,6 +26,7 @@
  	};
 
 	var hostPlayer = null,
+		hostInjectionPlayerContainer = null,
 		hostPlayerTrackInfoContainer = null,
 		hostLocales = {
 			'downloadMp3': null,
@@ -48,7 +51,8 @@
 
  	var deezifyPrimaryContainer = null,
  		deezifyLinkContainer = null,
- 		deezifyTextContainer = null;
+ 		deezifyTextContainer = null,
+ 		deezifyIconContainer = null;
 
  	var captchaBackground = document.createElement('div');
  	captchaBackground.className = 'deezify-captcha-background';
@@ -93,17 +97,23 @@
 			{
 				if (currentHost === hostsList.deezer)
 				{
-					hostSongData.title_container = document.getElementById('player_track_title');
-					hostSongData.performer_container = document.getElementById('player_track_artist_container');
-					hostSongData.title = hostSongData.title_container.innerText;
-					hostSongData.performer = hostSongData.performer_container.innerText;
-					hostSongData.track_version = deezify.getDzrTrackVersion();
+                                        hostSongData.title = deezify.getDzrInfo('getSongTitle()');
+					hostSongData.performer = deezify.getDzrInfo('getArtistName()');
+					hostSongData.track_version = '';
 				}
 
 				else if (currentHost === hostsList.xboxmusic)
 				{
 					hostSongData.title_container = hostPlayer.getElementsByClassName('primaryMetadata')[1];
 					hostSongData.performer_container = hostPlayer.getElementsByClassName('secondaryMetadata')[1];
+					hostSongData.title = hostSongData.title_container.innerText.trim();
+					hostSongData.performer = hostSongData.performer_container.getElementsByTagName('a')[0].innerText.trim();
+				}
+
+				else if (currentHost === hostsList.spotify)
+				{
+					hostSongData.title_container = hostPlayer.getElementsByTagName('h3')[0];
+					hostSongData.performer_container = hostPlayer.getElementsByTagName('h4')[0];
 					hostSongData.title = hostSongData.title_container.innerText.trim();
 					hostSongData.performer = hostSongData.performer_container.getElementsByTagName('a')[0].innerText.trim();
 				}
@@ -143,26 +153,38 @@
 			for (var patch in trackTitlePatch)
 				apiQueryData.title = apiQueryData.title.replace(patch, trackTitlePatch[patch]);
 
-			xmlhttp = new XMLHttpRequest();
+			var xmlhttp = new XMLHttpRequest();
 			xmlhttp.open('GET', vkParams.api.url + '/method/execute.' + vkParams.api.method + deezify.encodeQueryData(apiQueryData), true);
 			xmlhttp.send();
 			xmlhttp.onreadystatechange = function()
 			{
 				if (xmlhttp.readyState === 4)
 				{
-					var apiResponse = JSON.parse(xmlhttp.response);
-					if (typeof apiResponse.error === 'undefined' && apiResponse.response.count)
-					{
-						var url = document.createElement('a');
-					 	url.download = apiQueryData.title + ' - Deezify.mp3';
-						url.href = apiResponse.response.items[0].url;
-						url.dataset.downloadurl = ['audio/mpeg', url.download, url.href].join(':');
-						url.click();
+                                        var apiResponse = JSON.parse(xmlhttp.response);	
+                                        if (typeof apiResponse.error === 'undefined' && apiResponse.response.count)
+					{                                        
+                                            deezifyTextContainer.innerText = hostLocales.downloadMp3;        
+                                            
+                                            var xhr = new XMLHttpRequest();
+                                            xhr.open('GET', apiResponse.response.items[0].url, true);
+                                            xhr.responseType = 'blob';
+                                            xhr.onload = function(e) {
+                                                    if (this.status == 200) 
+                                                    {
+                                                        var blob = new Blob([this.response], {type: 'audio/mpeg'});
+                                                        var url = window.URL.createObjectURL(blob);
+                                                        var a = document.createElement('a');
+                                                        a.download = apiQueryData.title + ' - Deezify.mp3';
+                                                        a.href = url;
+                                                        //a.dataset.downloadurl = ['audio/mpeg', url.download, url.href].join(':');
+                                                        a.click();
+                                                        window.URL.revokeObjectURL(url);
 
-						deezifyTextContainer.innerText = hostLocales.downloadMp3;
-						downloadEnabled = true;
-					}
-
+                                                        downloadEnabled = true;
+                                                    }
+                                            };
+                                            xhr.send();
+                                        }   
 					else if (typeof apiResponse.error === 'undefined' && !apiResponse.response.count)
 						return deezify.setApiError(1);
 
@@ -251,14 +273,14 @@
 			return '?' + query.join('&');
 		},
 
-		getDzrTrackVersion: function()
+		getDzrInfo: function(prop)
 		{
 			var xPlayerData = document.createElement('script');
 			xPlayerData.type = 'text/javascript';
-			xPlayerData.text = 'localStorage.setItem("' + localStorageKey + 'trackVersion", dzPlayer.getCurrentSongInfo().VERSION || "");';
+			xPlayerData.text = 'localStorage.setItem("' + localStorageKey + 'dzPlayer", dzPlayer.'+prop+' || "");';
 			document.body.appendChild(xPlayerData);
 			document.body.removeChild(xPlayerData);
-			return localStorage.getItem(localStorageKey + 'trackVersion');;
+			return localStorage.getItem(localStorageKey + 'dzPlayer');
 		},
 
 		fade: function(type, element, speed, callback)
@@ -316,32 +338,55 @@
 
 	else if (currentHost === hostsList.deezer)
 	{
-		deezify.setLocales('deezer');
-		hostPlayer = document.getElementsByClassName('player')[0];
-		if (typeof hostPlayer === 'undefined')
-			return;
-
-		var deezerTrackInfoContainer = hostPlayer.getElementsByClassName('track-info')[0];
-		deezerTrackInfoContainer.addEventListener('DOMSubtreeModified', deezerPlayerReady);
-
-		function deezerPlayerReady(e)
-		{
-			if (e.srcElement.id === 'player_track_title')
+                deezify.setLocales('deezer');
+		var getPlayer = setInterval(function() {
+			if (document.getElementsByClassName('brand').length > 0)
 			{
-				deezerTrackInfoContainer.removeEventListener('DOMSubtreeModified', deezerPlayerReady);
+                            clearInterval(getPlayer);
+                            hostInjectionPlayerContainer = document.getElementsByClassName('brand')[0];
+                            deezifyPrimaryContainer = document.createElement('div');
+                            deezifyPrimaryContainer.className = 'deezify-container';
+                            hostInjectionPlayerContainer.appendChild(deezifyPrimaryContainer);
 
-				hostInjectionPlayerContainer = document.getElementsByClassName('topbar')[0].getElementsByClassName('nav')[0];
+                            deezifyLinkContainer = document.createElement('a');
+                            deezifyLinkContainer.className = 'deezify-link';
+                            deezifyLinkContainer.setAttribute('data-deezify-ref', 'player');
+                            deezifyPrimaryContainer.appendChild(deezifyLinkContainer);
+
+                            deezifyTextContainer = document.createElement('span');
+                            deezifyTextContainer.className = 'deezify-text';
+                            deezifyTextContainer.innerText = hostLocales.downloadMp3;
+                            deezifyLinkContainer.appendChild(deezifyTextContainer);
+
+                            deezify.fade('in', deezifyPrimaryContainer, function() {
+                                    deezifyLinkContainer.onclick = deezify.initDownload;
+                                    deezifyTextContainer.onclick = deezifyLinkContainer.click;
+                            });
+			}
+		}, 200);
+	}
+
+	else if (currentHost === hostsList.spotify)
+	{
+		deezify.setLocales('spotify');
+		var getPlayer = setInterval(function() {
+			if (!!~document.body.className.indexOf('started'))
+			{
+				clearInterval(getPlayer);
+				hostPlayer = document.getElementById('app-player').contentDocument.getElementById('player');
+
+				hostInjectionPlayerContainer = document.getElementById('main-nav').getElementsByTagName('ul')[0];
 				deezifyPrimaryContainer = document.createElement('li');
 				deezifyPrimaryContainer.className = 'deezify-container';
 				hostInjectionPlayerContainer.appendChild(deezifyPrimaryContainer);
 
 				deezifyLinkContainer = document.createElement('a');
-				deezifyLinkContainer.className = 'deezify-link';
+				deezifyLinkContainer.className = 'deezify-link spoticon-download-32 standard-menu-item';
 				deezifyLinkContainer.setAttribute('data-deezify-ref', 'player');
 				deezifyPrimaryContainer.appendChild(deezifyLinkContainer);
 
 				deezifyTextContainer = document.createElement('span');
-				deezifyTextContainer.className = 'deezify-text';
+				deezifyTextContainer.className = 'deezify-text nav-text';
 				deezifyTextContainer.innerText = hostLocales.downloadMp3;
 				deezifyLinkContainer.appendChild(deezifyTextContainer);
 
@@ -350,31 +395,17 @@
 					deezifyTextContainer.onclick = deezifyLinkContainer.click;
 				});
 			}
-		}
-
-
-	}
-
-	else if (currentHost === hostsList.spotify)
-	{
-		// TODO, once again
+		}, 200);
 	}
 
 	else if (currentHost === hostsList.xboxmusic)
 	{
 		deezify.setLocales('xboxMusic');
-		hostPlayer = document.getElementsByClassName('player')[0];
-		if (typeof hostPlayer === 'undefined')
-			return;
-
-		hostPlayer.addEventListener('DOMSubtreeModified', xboxMusicPlayerReady);
-
-		function xboxMusicPlayerReady(e)
-		{
-			if (e.srcElement.className === 'playerNowPlaying'
-			&& typeof hostPlayer.getElementsByClassName('primaryMetadata')[1] !== 'undefined')
+		var getPlayer = setInterval(function() {
+			if (document.getElementsByClassName('playerNowPlayingMetadata').length)
 			{
-				hostPlayer.removeEventListener('DOMSubtreeModified', xboxMusicPlayerReady);
+				clearInterval(getPlayer);
+				hostPlayer = document.getElementsByClassName('player')[0];
 
 				hostInjectionPlayerContainer = document.getElementById('navigation').getElementsByTagName('ul')[0];
 				deezifyPrimaryContainer = document.createElement('li');
@@ -400,11 +431,10 @@
 					deezifyTextContainer.onclick = deezifyLinkContainer.click;
 				});
 			}
-		}
-
+		}, 200);
 	}
 
 	else if (currentHost === hostsList.beatsmusic)
 	{
-		// TODO, or release BeatsMe (rtmp parser)
+		// Meh
 	}
