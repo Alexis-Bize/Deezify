@@ -20,7 +20,7 @@
  	var hostsList = {
  		'rdio': 'www.rdio.com',
  		'deezer': 'www.deezer.com',
- 		'spotify': 'play.spotify.com',
+ 		'spotify': 'open.spotify.com',
  		'xboxmusic': 'music.xbox.com',
  		'beatsmusic': 'listen.beatsmusic.com'
  	};
